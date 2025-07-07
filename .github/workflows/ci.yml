@@ -22,3 +22,4 @@ jobs:
     - name: Build
       run: dotnet build appComercial/appComercial.sln --configuration Release --no-restore
 
+# commit forciado - verificación 07/07

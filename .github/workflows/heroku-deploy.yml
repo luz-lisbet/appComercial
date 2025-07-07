@@ -1,0 +1,29 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main  # Desplegar automáticamente al hacer push en la rama main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Ejecutar en un entorno Ubuntu
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.x'  # Especifica la versión de .NET que estás usando
+
+      - name: Install Heroku CLI
+        run: curl https://cli-assets.heroku.com/install.sh | sh  # Instalar Heroku CLI
+
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}  # Utilizar el token de Heroku configurado en GitHub Secrets
+        run: |
+          heroku git:remote -a your-heroku-app-name  # Reemplaza con el nombre de tu aplicación en Heroku
+          git push heroku main  # Desplegar la aplicación

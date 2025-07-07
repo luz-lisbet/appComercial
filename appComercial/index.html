@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD de Cursos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 py-10 px-5">
+
+    <div class="max-w-7xl mx-auto bg-white p-5 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-5">Gestión de Cursos</h1>
+        
+        <!-- Botones de acción -->
+        <div class="mb-5">
+            <button onclick="openCreateModal()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Agregar Curso</button>
+        </div>
+
+        <!-- Tabla de Cursos -->
+        <table id="coursesTable" class="min-w-full table-auto">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-gray-700">ID</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Curso</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Créditos</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Horas Semanales</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Ciclo</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Docente</th>
+                    <th class="px-6 py-3 text-left text-gray-700">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="coursesTableBody">
+                <!-- Aquí se llenarán los datos con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal para Agregar o Editar Curso -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+            <h2 class="text-xl font-semibold mb-5" id="modalTitle">Agregar Curso</h2>
+            <form id="courseForm">
+                <div class="mb-4">
+                    <label for="cursoNombre" class="block text-gray-700">Nombre del Curso</label>
+                    <input type="text" id="cursoNombre" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label for="creditos" class="block text-gray-700">Créditos</label>
+                    <input type="number" id="creditos" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label for="horasSemanal" class="block text-gray-700">Horas Semanales</label>
+                    <input type="number" id="horasSemanal" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label for="ciclo" class="block text-gray-700">Ciclo</label>
+                    <input type="text" id="ciclo" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label for="docente" class="block text-gray-700">ID Docente</label>
+                    <input type="number" id="docente" class="w-full px-4 py-2 mt-1 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="flex justify-between">
+                    <button type="button" onclick="closeModal()" class="bg-red-500 text-white px-4 py-2 rounded-md">Cancelar</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md" id="submitButton">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let courses = [];
+        let editCourseId = null;
+
+        // Fetch cursos
+        async function fetchCourses() {
+            const response = await fetch('https://localhost:7188/api/Cursos');
+            const data = await response.json();
+            courses = data;
+            renderCourses();
+        }
+
+        // Renderizar la tabla
+        function renderCourses() {
+            const tableBody = document.getElementById('coursesTableBody');
+            tableBody.innerHTML = '';
+            courses.forEach(course => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-3">${course.id}</td>
+                    <td class="px-6 py-3">${course.cursoNombre}</td>
+                    <td class="px-6 py-3">${course.creditos}</td>
+                    <td class="px-6 py-3">${course.horasSemanal}</td>
+                    <td class="px-6 py-3">${course.ciclo}</td>
+                    <td class="px-6 py-3">${course.docente ? course.docente.nombres : ''}</td>
+                    <td class="px-6 py-3">
+                        <button class="bg-yellow-500 text-white px-4 py-2 rounded-md" onclick="openEditModal(${course.id})">Editar</button>
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-md" onclick="deleteCourse(${course.id})">Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Abre el modal para agregar un nuevo curso
+        function openCreateModal() {
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modalTitle').textContent = 'Agregar Curso';
+            document.getElementById('courseForm').reset();
+            document.getElementById('submitButton').textContent = 'Agregar';
+            editCourseId = null;
+        }
+
+        // Abre el modal para editar un curso
+        function openEditModal(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                document.getElementById('modal').classList.remove('hidden');
+                document.getElementById('modalTitle').textContent = 'Editar Curso';
+                document.getElementById('cursoNombre').value = course.cursoNombre;
+                document.getElementById('creditos').value = course.creditos;
+                document.getElementById('horasSemanal').value = course.horasSemanal;
+                document.getElementById('ciclo').value = course.ciclo;
+                document.getElementById('docente').value = course.idDocente;
+                document.getElementById('submitButton').textContent = 'Actualizar';
+                editCourseId = courseId;
+            }
+        }
+
+        // Cerrar el modal
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        // Agregar o editar curso
+        document.getElementById('courseForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const cursoNombre = document.getElementById('cursoNombre').value;
+            const creditos = document.getElementById('creditos').value;
+            const horasSemanal = document.getElementById('horasSemanal').value;
+            const ciclo = document.getElementById('ciclo').value;
+            const docente = document.getElementById('docente').value;
+
+            if (editCourseId) {
+                // Actualizar curso
+                const response = await fetch(`https://localhost:7188/api/Cursos/${editCourseId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: editCourseId, cursoNombre, creditos, horasSemanal, ciclo, idDocente: docente }),
+                });
+                if (response.ok) {
+                    fetchCourses();
+                    closeModal();
+                }
+            } else {
+                // Agregar nuevo curso
+                const response = await fetch('https://localhost:7188/api/Cursos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cursoNombre, creditos, horasSemanal, ciclo, idDocente: docente }),
+                });
+                if (response.ok) {
+                    fetchCourses();
+                    closeModal();
+                }
+            }
+        });
+
+        // Eliminar curso
+        async function deleteCourse(courseId) {
+            const response = await fetch(`https://localhost:7188/api/Cursos/${courseId}`, {
+                method: 'DELETE',
+            });
+            if (response.ok) {
+                fetchCourses();
+            }
+        }
+
+        // Cargar los cursos al inicio
+        fetchCourses();
+    </script>
+</body>
+</html>
